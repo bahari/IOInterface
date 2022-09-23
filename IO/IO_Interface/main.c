@@ -2,11 +2,14 @@
 
 //#define DEBUG_FILE
 //#define WDOGLED
+#define TEST_READ_GPIO
 
 FILE *fpDebug= NULL;
 
 // Mutex for thread synchronization
 pthread_mutex_t lock;
+// Thread ID for GPIO read and LCD menu functionalities
+pthread_t tidGpioLcd;
 
 struct sigaction act;
 
@@ -36,8 +39,8 @@ void sigkill_handler(int signum, siginfo_t *info, void *ptr)
  *
  ***************************************************************/
 void sigint_handler(int signum)
-{  
-	
+{
+
 	exit (0);
 }
 
@@ -47,24 +50,24 @@ void sigint_handler(int signum)
  *Return:        Current time in HH:MM:SS format
  *
  ***************************************************************/
-char *get_curr_time (void)	
+char *get_curr_time (void)
 {
 	time_t t ;
     struct tm *tmp ;
-	
+
 	char timebuf[80];
 	char *ptimebuf = malloc(80);
-	
+
 	memset(&timebuf, 0, sizeof(timebuf));
-	
+
     time(&t);
-     
+
     //localtime() uses the time pointed by t ,
     // to fill a tm structure with the
     // values that represent the
     // corresponding local time.
     tmp = localtime(&t);
-     
+
     // using strftime to display time
 	// Retrieve local time - HH:MM:SS
 	strftime(timebuf, sizeof(timebuf), "%T", tmp);
@@ -79,7 +82,7 @@ char *get_curr_time (void)
 		// Put end of string character
 		else
 		{
-			ptimebuf[i] = '\0'; 
+			ptimebuf[i] = '\0';
 			break;
 		}
 	}
@@ -96,20 +99,20 @@ char *get_curr_date (void)
 {
 	time_t t ;
     struct tm *tmp ;
-	
+
 	char datebuf[80];
 	char *pdatebuf = malloc(80);
-	
+
 	memset(&datebuf, 0, sizeof(datebuf));
-	
+
     time(&t);
-     
+
     //localtime() uses the time pointed by t ,
     // to fill a tm structure with the
     // values that represent the
     // corresponding local time.
     tmp = localtime(&t);
-     
+
     // using strftime to display time
 	// Retrieve local date - D/M/Y
 	strftime(datebuf, sizeof(datebuf), "%d/%m/%Y", tmp);
@@ -151,9 +154,104 @@ void delay_sec( int seconds )
  *
  *Return:        NA
  ***************************************************************/
-int msleep(unsigned int tms) 
+int msleep(unsigned int tms)
 {
   return usleep(tms * 1000);
+}
+
+/****************************************************************
+ *Function Name: thread_lcd_menu
+ *Description:   Thread to read 2 GPIO and LCD menu navigation
+  *Return:        NA
+ *
+ ***************************************************************/
+void *thread_lcd_menu (void *arguments)
+{
+    arguments = NULL;
+
+    char *pCurrDate;
+	char *pCurrTime;
+
+	unsigned char gpioUp = 0x00;
+    unsigned char gpioDwn = 0x00;
+
+    pCurrDate = get_curr_date(); // Get current date
+	pCurrTime = get_curr_time(); // Get current time
+
+    // Initialize GPIO50 - 0x50
+    // Initialize failed!
+    if (read_gpio(0x50,0,gpioUp) == 0xff)
+    {
+        printf ("[%s %s] THD-LCD-MENU: UP GPIO initialization FAILED!\n", pCurrDate, pCurrTime);
+    }
+    // Initialize successfull
+    else
+    {
+        // Only enable and initialize this GPIO once
+        if (gpioUp == 0x00)
+        {
+            gpioUp = 0x01;
+        }
+        printf ("[%s %s] THD-LCD-MENU: UP GPIO initialization SUCCESSFULL\n", pCurrDate, pCurrTime);
+    }
+    // Initialize GPIO50 - 0x50
+    // Initialize failed!
+    if (read_gpio(0x52,0,gpioDwn) == 0xff)
+    {
+        printf ("[%s %s] THD-LCD-MENU: DOWN GPIO initialization FAILED!\n", pCurrDate, pCurrTime);
+    }
+    // Initialize successfull
+    else
+    {
+        // Only enable and initialize this GPIO once
+        if (gpioDwn == 0x00)
+        {
+            gpioDwn = 0x01;
+        }
+        printf ("[%s %s] THD-LCD-MENU: DOWN GPIO initialization SUCCESSFULL\n", pCurrDate, pCurrTime);
+    }
+    // Release memory allocation
+	free(pCurrDate);
+	free(pCurrTime);
+	// Thread main loop
+    while(1)
+    {
+        pCurrDate = get_curr_date(); // Get current date
+        pCurrTime = get_curr_time(); // Get current time
+
+        // Test GPIO for UP and DOWN menu
+        #ifdef TEST_READ_GPIO
+        // READ UP GPIO
+        // ON
+        if (read_gpio(0x50,0,gpioUp) == 0x00)
+        {
+            printf ("[%s %s] THD-LCD-MENU: UP GPIO ON\n", pCurrDate, pCurrTime);
+        }
+        // OFF
+        else
+        {
+            printf ("[%s %s] THD-LCD-MENU: UP GPIO OFF\n", pCurrDate, pCurrTime);
+        }
+        // READ DOWN GPIO
+        // ON
+        if (read_gpio(0x52,0,gpioDwn) == 0x00)
+        {
+            printf ("[%s %s] THD-LCD-MENU: DOWN GPIO ON\n", pCurrDate, pCurrTime);
+        }
+        // OFF
+        else
+        {
+            printf ("[%s %s] THD-LCD-MENU: DOWN GPIO OFF\n", pCurrDate, pCurrTime);
+        }
+        #endif
+
+        // Release memory allocation
+        free(pCurrDate);
+        free(pCurrTime);
+        sleep(1);
+    }
+    pthread_exit(NULL);
+    return NULL;
 }
 
 /****************************************************************
@@ -163,22 +261,22 @@ int msleep(unsigned int tms)
  *Return:        NA
  ***************************************************************/
 int main()
-{    
+{
 	int clearlogcnt = 0;
 	int verCnt = 0;
 	int lcdCnt = 0;
 	int spaceCnt = 0;
-	
+
 	unsigned char aliveONOFF = 0x00;
 	unsigned char lcdDateTime = 0x01;
 
 	char *pCurrDate;
 	char *pCurrTime;
 	char datetimebuff[16];
-	
+
 	memset(&act, 0, sizeof(act));
 	memset(&datetimebuff, 0, sizeof(datetimebuff));
-	
+
 	act.sa_sigaction = sigkill_handler;
 	act.sa_flags = SA_SIGINFO;
 
@@ -204,7 +302,7 @@ int main()
 
 	pCurrDate = get_curr_date(); // Get current date
 	pCurrTime = get_curr_time(); // Get current time
-		
+
 	// Initialize FINTEK GPIO API
 	// Initialization successfull
 	if (init_fintek_gpio() == 0x01)
@@ -219,7 +317,7 @@ int main()
 	else
 	{
 		#ifdef DEBUG_FILE
-		fprintf(fpDebug, "[%s %s] MAIN-LOOP: GPIO initialization FAILED!\n", pCurrDate, pCurrTime); 
+		fprintf(fpDebug, "[%s %s] MAIN-LOOP: GPIO initialization FAILED!\n", pCurrDate, pCurrTime);
 		#else
 		printf ("[%s %s] MAIN-LOOP: GPIO initialization FAILED!\n", pCurrDate, pCurrTime);
 		#endif // DEBUG_FILE
@@ -227,11 +325,11 @@ int main()
 		exit(EXIT_FAILURE); // Return failure
 	}
 	//write_gpio(0x54,1,0,0,gpioOutAlv);
-	
+
 	// Initialize LCD function
 	// RS pin - GPIO54
 	// Enable pin - GPIO56
-	// Data pin (D4-D7) - GPIO51, GPIO53, GPIO55, GPIO57 
+	// Data pin (D4-D7) - GPIO51, GPIO53, GPIO55, GPIO57
 	if (LiquidCrystal_init(0x54, 0x56, 0x51, 0x53, 0x55, 0x57) == 0xff)
 	{
 		#ifdef DEBUG_FILE
@@ -243,31 +341,37 @@ int main()
 	else
 	{
 		begin(16, 2); // Initialize LCD character and rows
-		
+
 		#ifdef DEBUG_FILE
 		fprintf(fpDebug, "[%s %s] MAIN-LOOP: LCD initialization SUCCESSFULL\n", pCurrDate, pCurrTime);
 		#else
 		printf ("[%s %s] MAIN-LOOP: LCD initialization SUCCESSFULL\n", pCurrDate, pCurrTime);
 		#endif // DEBUG_FILE
 	}
-	
+
 	clear(); // Clear first LCD previous contents
 	setCursor (0, 0);
 	printlcd ("   MASURI+SCH   ", 16);
 	setCursor(0, 1);
 	printlcd (" Version: 1.0.1 ", 16);
-					
-	// Release memory allocation
+
+    // Create thread for GPIO read and LCD menu functionalities
+    // Failed
+    if (pthread_create(&tidGpioLcd,NULL,thread_lcd_menu,NULL) < 0)
+    {
+        printf ("[%s %s] MAIN-LOOP: Create thread GPIO and LCD menu FAILED!\n", pCurrDate, pCurrTime);
+    }
+    // Release memory allocation
 	free(pCurrDate);
 	free(pCurrTime);
-	
-	// Main process loop 
+
+    // Main process loop
 	// Process interval at the main loop will used custom delay
 	mainLoop:
 		msleep(500);
-		
+
 		pCurrDate = get_curr_date(); // Get current date
-		pCurrTime = get_curr_time(); // Get current time 
+		pCurrTime = get_curr_time(); // Get current time
 
 		#ifdef DEBUG_FILE
 		clearlogcnt++;
@@ -300,7 +404,7 @@ int main()
 		if (aliveONOFF == 0x00)
 		{
 			aliveONOFF = 0x01;
-			
+
 			#ifdef WDOGLED
 			// Turn ON LED - For controller ALIVE indicator (GPIO50)
 			// Failed
@@ -327,7 +431,7 @@ int main()
 		else
 		{
 			aliveONOFF = 0x00;
-			
+
 			#ifdef WDOGLED
 			// Turn OFF LED - For controller ALIVE indicator (GPIO50)
 			// Failed
@@ -349,14 +453,14 @@ int main()
 				}
 			}
 			#else
-			lcdCnt++; // Seconds counter 
-			
+			lcdCnt++; // Seconds counter
+
 			// Every 5s change LCD display contents
 			// Shows current date and time
 			if (lcdCnt == 10)
 			{
 				lcdDateTime = 0x00;
-				
+
 				clear(); // Clear first LCD previous contents
 				setCursor (0, 0);
 				printlcd ("   MASURI+SCH   ", 16);
@@ -368,19 +472,19 @@ int main()
 				lcdDateTime = 0x01;
 				lcdCnt = 0;
 			}
-			// Display time on the LCD 
+			// Display time on the LCD
 			if (lcdDateTime == 0x01)
 			{
 				setCursor (0, 0);
-				
+
 				memset(&datetimebuff, 0, sizeof(datetimebuff));
-				
+
 				// Stupid method to arrange date to display on the LCD
 				// xx/xx/yyyy
 				datetimebuff[0]   = ' ';
 				datetimebuff[1]   = ' ';
 				datetimebuff[2]   = ' ';
-				datetimebuff[3]   =  pCurrDate[0];  // "D" 
+				datetimebuff[3]   =  pCurrDate[0];  // "D"
 				datetimebuff[4]   =  pCurrDate[1];  // "D"
 				datetimebuff[5]   =  pCurrDate[2];  // "/"
 				datetimebuff[6]   =  pCurrDate[3];  // "M"
@@ -393,11 +497,11 @@ int main()
 				datetimebuff[13]  = ' ';
 				datetimebuff[14]  = ' ';
 				datetimebuff[15]  = ' ';
-				
+
 				printlcd (datetimebuff, 16);
-				
+
 				setCursor(0, 1);
-				
+
 				// Stupid method to arrange time to display on the LCD
 				// xx:xx:xx
 				datetimebuff[0]   = ' ';
@@ -416,9 +520,9 @@ int main()
 				datetimebuff[13]  = ' ';
 				datetimebuff[14]  = ' ';
 				datetimebuff[15]  = ' ';
-				
+
 				printlcd (datetimebuff, 16);
-				
+
 				memset(&datetimebuff, 0, sizeof(datetimebuff));
 			}
 			#endif
@@ -427,6 +531,6 @@ int main()
 		free(pCurrDate);
 		free(pCurrTime);
 	goto mainLoop;
-	
+
 	return 0;
 }

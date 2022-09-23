@@ -10,7 +10,7 @@ uint8_t _displayfunction;
 uint8_t _displaycontrol;
 uint8_t _displaymode;
 uint8_t _numlines,_currline;
-  
+
 unsigned char gpioOutRs = 0x00;
 unsigned char gpioOutEn = 0x00;
 unsigned char gpioData = 0x00;
@@ -51,14 +51,18 @@ unsigned char init_fintek_gpio(void)
  *               0xFF - Failed
  *
  ***************************************************************/
-unsigned int read_gpio (unsigned int gpioId, unsigned int direction)
+unsigned int read_gpio (unsigned int gpioId, unsigned int direction, unsigned char init)
 {
     unsigned int data = 0;
     int status;
 
-    // Enable GPIO for read process
-    CHECK_RET(_EnableGPIO(gpioId, eGPIO_Mode_Enable));
-
+    // Enable GPIO for the first time - Set the flag
+    // If the flag already set, no need to enable GPIO again - For read and write operation
+    if (init == 0x00)
+    {
+        // Enable GPIO for read process
+        CHECK_RET(_EnableGPIO(gpioId, eGPIO_Mode_Enable));
+    }
     // Always GPIO as input
     if (direction != eGPIO_Direction_Out)
     {
@@ -75,7 +79,7 @@ unsigned int read_gpio (unsigned int gpioId, unsigned int direction)
         // READ success
         else
         {
-            DeactiveSIO(sio_data.ic_port);
+            //DeactiveSIO(sio_data.ic_port);
             return data;
         }
     }
@@ -101,14 +105,14 @@ unsigned int write_gpio (unsigned int gpioId, unsigned int direction, unsigned i
     if (init == 0x00)
     {
         // Enable GPIO for write process
-        CHECK_RET(_EnableGPIO(gpioId, eGPIO_Mode_Enable)); 
+        CHECK_RET(_EnableGPIO(gpioId, eGPIO_Mode_Enable));
     }
     // Always GPIO as output
     if (direction == eGPIO_Direction_Out)
 	{
 		// Enable GPIO for given ID
 		CHECK_RET(_SetGpioOutputEnableIdx(gpioId, eGPIO_Direction_Out));
-		
+
         // Set OUTPUT mode - Set the flag
         // If the flag already set - No need to set the OUTPUT mode again
         // for this particular GPIO OUTPUT
@@ -151,8 +155,8 @@ void pulseEnable (void)
 
 void write4bits(uint8_t value)
 {
-	// LCD 4 bits mode of data 
-	for (int i = 0; i < 4; i++) 
+	// LCD 4 bits mode of data
+	for (int i = 0; i < 4; i++)
 	{
 		// Initialize GPIO for LCD data  - GPIO51,53,55,57
 		// Initialization once, the rest process are write data
@@ -176,7 +180,7 @@ void write4bits(uint8_t value)
 void sendData (uint8_t value, uint8_t mode)
 {
 	write_gpio(_rs_pin,1,0,mode,gpioOutRs);
-	
+
 	write4bits(value>>4);
     write4bits(value);
 }
@@ -205,44 +209,44 @@ void display (void)
 
 void begin(uint8_t cols, uint8_t lines)
 {
-	if (lines > 1) 
+	if (lines > 1)
 	{
 		_displayfunction |= LCD_2LINE;
 	}
 	_numlines = lines;
 	_currline = 0;
-	
+
 	// SEE PAGE 45/46 FOR INITIALIZATION SPECIFICATION!
 	// according to datasheet, we need at least 40ms after power rises above 2.7V
 	// before sending commands. Arduino can turn on way befer 4.5V so we'll wait 50
 	usleep (50000);
-	
+
 	// Now we pull both RS low to begin commands
 	write_gpio(_rs_pin,1,0,0,gpioOutRs);
 	write_gpio(_enable_pin,1,0,0,gpioOutEn);
-	
+
 	// Put the LCD into 4 bit or 8 bit mode
 	if (!(_displayfunction & LCD_8BITMODE))
 	{
 		// We start in 8bit mode, try to set 4 bit mode
 		write4bits(0x03);
 		usleep(4500); // wait min 4.1ms
-		
+
 		// Second try
 		write4bits(0x03);
 		usleep(4500); // wait min 4.1ms
-		
+
 		// finally, set to 4-bit interface
-		write4bits(0x02); 
+		write4bits(0x02);
 	}
 	// finally, set # lines, font size, etc.
-	command(LCD_FUNCTIONSET | _displayfunction);  
-	
+	command(LCD_FUNCTIONSET | _displayfunction);
+
 	// turn the display on with no cursor or blinking default
-	_displaycontrol = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;  
+	_displaycontrol = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
 	display();
-	
-	// clear it off 
+
+	// clear it off
 	clear();
 
 	// Initialize to default text direction (for romance languages)
@@ -253,7 +257,7 @@ void begin(uint8_t cols, uint8_t lines)
 
 size_t printlcd(uint8_t str[], size_t len)
 {
-	// Start print string to LCD  
+	// Start print string to LCD
 	for (int i = 0; i < len; i++)
 	{
 		sendData(str[i], 1); // For normal data to LCD, write RS pin HIGH
@@ -270,12 +274,12 @@ void setCursor (uint8_t col, uint8_t row)
 	command(LCD_SETDDRAMADDR | (col + row_offsets[row]));
 }
 
-unsigned char LiquidCrystal_init(uint8_t rs, uint8_t enable, 
+unsigned char LiquidCrystal_init(uint8_t rs, uint8_t enable,
                         uint8_t d0, uint8_t d1, uint8_t d2,
                         uint8_t d3)
 {
     int retCnt = 0;
-	
+
 	_rs_pin = rs;         // GPIO54
     _enable_pin = enable; // GPIO56
 
@@ -287,7 +291,7 @@ unsigned char LiquidCrystal_init(uint8_t rs, uint8_t enable,
 	_data_pins[5] = 0;
 	_data_pins[6] = 0;
 	_data_pins[7] = 0;
-	
+
 	// Initialize GPIO for LCD RS pin - GPIO54
 	// Initialization failed
 	if (write_gpio(_rs_pin,1,0,0,gpioOutRs) == 0xff)
@@ -298,14 +302,14 @@ unsigned char LiquidCrystal_init(uint8_t rs, uint8_t enable,
 	else
 	{
 		retCnt++;
-		
+
 		// Only enable and initialize this GPIO once
 		if (gpioOutRs == 0x00)
 		{
 			gpioOutRs = 0x01;
 		}
 	}
-	
+
 	// Initialize GPIO for LCD ENABLE pin - GPIO56
 	// Initialization failed
 	if (write_gpio(_enable_pin,1,0,0,gpioOutEn) == 0xff)
@@ -316,7 +320,7 @@ unsigned char LiquidCrystal_init(uint8_t rs, uint8_t enable,
 	else
 	{
 		retCnt++;
-		
+
 		// Only enable and initialize this GPIO once
 		if (gpioOutEn == 0x00)
 		{
@@ -327,11 +331,11 @@ unsigned char LiquidCrystal_init(uint8_t rs, uint8_t enable,
 	{
 		return 0xff;
 	}
-	
+
 	// 4 bits LCD mode
 	_displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
-	
+
 	//begin(16, 1);
-	
+
 	return 0x01;
 }
