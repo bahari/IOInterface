@@ -54,6 +54,7 @@
 #define LCD_5x8DOTS 0x00
 
 extern unsigned char init_fintek_gpio(void);
+extern void deactivate_gpio (void);
 //extern unsigned int read_gpio (unsigned int gpioId, unsigned int direction);
 extern unsigned int read_gpio (unsigned int gpioId, unsigned int direction, unsigned char init);
 extern unsigned int write_gpio (unsigned int gpioId, unsigned int direction, unsigned int outMode, unsigned int outVal, unsigned char init);

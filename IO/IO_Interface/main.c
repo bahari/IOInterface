@@ -7,7 +7,7 @@
 FILE *fpDebug= NULL;
 
 // Mutex for thread synchronization
-pthread_mutex_t lock;
+pthread_mutex_t lcdMenuMutex;
 // Thread ID for GPIO read and LCD menu functionalities
 pthread_t tidGpioLcd;
 
@@ -15,6 +15,8 @@ struct sigaction act;
 
 unsigned char showVersion = 0x01;
 unsigned char gpioOutAlv = 0x00;
+unsigned char gpioUpRead = 0x00;
+unsigned char gpioDwnRead = 0x00;
 
 /****************************************************************
  *Function Name: sigkill_handler
@@ -28,6 +30,14 @@ void sigkill_handler(int signum, siginfo_t *info, void *ptr)
     info = NULL;
     ptr = NULL;
 
+    char *pCurrDates;
+	char *pCurrTimes;
+
+	printf ("[%s %s] SIGINT: Terminate application via KILL command\n", pCurrDates, pCurrTimes);
+
+    // Clear GPIO API
+    deactivate_gpio();
+
 	exit (0);
 }
 
@@ -40,6 +50,13 @@ void sigkill_handler(int signum, siginfo_t *info, void *ptr)
  ***************************************************************/
 void sigint_handler(int signum)
 {
+    char *pCurrDates;
+	char *pCurrTimes;
+
+    printf ("[%s %s] SIGINT: Terminate application via CTRL+C\n", pCurrDates, pCurrTimes);
+
+    // Clear GPIO API
+    deactivate_gpio();
 
 	exit (0);
 }
@@ -169,85 +186,53 @@ void *thread_lcd_menu (void *arguments)
 {
     arguments = NULL;
 
-    char *pCurrDate;
-	char *pCurrTime;
+    char *pCurrDates;
+	char *pCurrTimes;
 
-	unsigned char gpioUp = 0x00;
-    unsigned char gpioDwn = 0x00;
-
-    pCurrDate = get_curr_date(); // Get current date
-	pCurrTime = get_curr_time(); // Get current time
-
-    // Initialize GPIO50 - 0x50
-    // Initialize failed!
-    if (read_gpio(0x50,0,gpioUp) == 0xff)
-    {
-        printf ("[%s %s] THD-LCD-MENU: UP GPIO initialization FAILED!\n", pCurrDate, pCurrTime);
-    }
-    // Initialize successfull
-    else
-    {
-        // Only enable and initialize this GPIO once
-        if (gpioUp == 0x00)
-        {
-            gpioUp = 0x01;
-        }
-        printf ("[%s %s] THD-LCD-MENU: UP GPIO initialization SUCCESSFULL\n", pCurrDate, pCurrTime);
-    }
-    // Initialize GPIO50 - 0x50
-    // Initialize failed!
-    if (read_gpio(0x52,0,gpioDwn) == 0xff)
-    {
-        printf ("[%s %s] THD-LCD-MENU: DOWN GPIO initialization FAILED!\n", pCurrDate, pCurrTime);
-    }
-    // Initialize successfull
-    else
-    {
-        // Only enable and initialize this GPIO once
-        if (gpioDwn == 0x00)
-        {
-            gpioDwn = 0x01;
-        }
-        printf ("[%s %s] THD-LCD-MENU: DOWN GPIO initialization SUCCESSFULL\n", pCurrDate, pCurrTime);
-    }
-    // Release memory allocation
-	free(pCurrDate);
-	free(pCurrTime);
 	// Thread main loop
     while(1)
     {
-        pCurrDate = get_curr_date(); // Get current date
-        pCurrTime = get_curr_time(); // Get current time
+        //pthread_mutex_lock(&lcdMenuMutex);
+
+        pCurrDates = get_curr_date(); // Get current date
+        pCurrTimes = get_curr_time(); // Get current time
+
+        //pthread_mutex_unlock(&lcdMenuMutex);
 
         // Test GPIO for UP and DOWN menu
         #ifdef TEST_READ_GPIO
         // READ UP GPIO
         // ON
-        if (read_gpio(0x50,0,gpioUp) == 0x00)
+        if (gpioUpRead == 0x01)
         {
-            printf ("[%s %s] THD-LCD-MENU: UP GPIO ON\n", pCurrDate, pCurrTime);
+            //printf ("THD-LCD-MENU: UP GPIO ON\n");
+            printf ("[%s %s] THD-LCD-MENU: UP GPIO ON\n", pCurrDates, pCurrTimes);
         }
         // OFF
         else
         {
-            printf ("[%s %s] THD-LCD-MENU: UP GPIO OFF\n", pCurrDate, pCurrTime);
+            //printf ("THD-LCD-MENU: UP GPIO OFF\n");
+            printf ("[%s %s] THD-LCD-MENU: UP GPIO OFF\n", pCurrDates, pCurrTimes);
         }
         // READ DOWN GPIO
         // ON
-        if (read_gpio(0x52,0,gpioDwn) == 0x00)
+        if (gpioDwnRead == 0x01)
         {
-            printf ("[%s %s] THD-LCD-MENU: DOWN GPIO ON\n", pCurrDate, pCurrTime);
+            //printf ("THD-LCD-MENU: DOWN GPIO ON\n");
+            printf ("[%s %s] THD-LCD-MENU: DOWN GPIO ON\n", pCurrDates, pCurrTimes);
         }
         // OFF
         else
         {
-            printf ("[%s %s] THD-LCD-MENU: DOWN GPIO OFF\n", pCurrDate, pCurrTime);
+            //printf ("THD-LCD-MENU: DOWN GPIO OFF\n");
+            printf ("[%s %s] THD-LCD-MENU: DOWN GPIO OFF\n", pCurrDates, pCurrTimes);
         }
         #endif
 
         // Release memory allocation
-        free(pCurrDate);
-        free(pCurrTime);
+        free(pCurrDates);
+        free(pCurrTimes);
+
         sleep(1);
     }
     pthread_exit(NULL);
@@ -270,6 +255,9 @@ int main()
 	unsigned char aliveONOFF = 0x00;
 	unsigned char lcdDateTime = 0x01;
 
+	unsigned char gpioUp = 0x00;
+    unsigned char gpioDwn = 0x00;
+
 	char *pCurrDate;
 	char *pCurrTime;
 	char datetimebuff[16];
@@ -286,7 +274,7 @@ int main()
 	signal(SIGUSR1, sigint_handler); // For handling kill -USR1 action, for KILL the daemon manually
 
     // Initialize mutex for thread synchronization
-	if (pthread_mutex_init(&lock, NULL) != 0)
+	if (pthread_mutex_init(&lcdMenuMutex, NULL) != 0)
 	{}
 
 	#ifdef DEBUG_FILE
@@ -324,6 +312,38 @@ int main()
 
 		exit(EXIT_FAILURE); // Return failure
 	}
+	// Initialize GPIO50 - 0x50
+    // Initialize failed!
+    if (read_gpio(0x50,0,gpioUp) == 0xff)
+    {
+        printf ("[%s %s] MAIN-LOOP: UP GPIO initialization FAILED!\n", pCurrDate, pCurrTime);
+    }
+    // Initialize successfull
+    else
+    {
+        // Only enable and initialize this GPIO once
+        if (gpioUp == 0x00)
+        {
+            gpioUp = 0x01;
+        }
+        printf ("[%s %s] MAIN-LOOP: UP GPIO initialization SUCCESSFULL\n", pCurrDate, pCurrTime);
+    }
+    // Initialize GPIO50 - 0x50
+    // Initialize failed!
+    if (read_gpio(0x52,0,gpioDwn) == 0xff)
+    {
+        printf ("[%s %s] MAIN-LOOP: DOWN GPIO initialization FAILED!\n", pCurrDate, pCurrTime);
+    }
+    // Initialize successfull
+    else
+    {
+        // Only enable and initialize this GPIO once
+        if (gpioDwn == 0x00)
+        {
+            gpioDwn = 0x01;
+        }
+        printf ("[%s %s] MAIN-LOOP: DOWN GPIO initialization SUCCESSFULL\n", pCurrDate, pCurrTime);
+    }
 	//write_gpio(0x54,1,0,0,gpioOutAlv);
 
 	// Initialize LCD function
@@ -362,8 +382,8 @@ int main()
         printf ("[%s %s] MAIN-LOOP: Create thread GPIO and LCD menu FAILED!\n", pCurrDate, pCurrTime);
     }
     // Release memory allocation
-	free(pCurrDate);
-	free(pCurrTime);
+	//free(pCurrDate);
+	//free(pCurrTime);
 
     // Main process loop
 	// Process interval at the main loop will used custom delay
@@ -372,6 +392,29 @@ int main()
 
 		pCurrDate = get_curr_date(); // Get current date
 		pCurrTime = get_curr_time(); // Get current time
+
+		// READ UP GPIO
+        // ON
+        if (read_gpio(0x50,0,gpioUp) == 0x00)
+        {
+            gpioUpRead = 0x01;
+        }
+        // OFF
+        else
+        {
+           gpioUpRead = 0x00;
+        }
+        // READ DOWN GPIO
+        // ON
+        if (read_gpio(0x52,0,gpioDwn) == 0x00)
+        {
+            gpioDwnRead = 0x01;
+        }
+        // OFF
+        else
+        {
+            gpioDwnRead = 0x00;
+        }
 
 		#ifdef DEBUG_FILE
 		clearlogcnt++;
@@ -531,6 +574,7 @@ int main()
 		free(pCurrDate);
 		free(pCurrTime);
 	goto mainLoop;
-
+	// Clear GPIO API
+    deactivate_gpio();
 	return 0;
 }

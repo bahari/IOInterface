@@ -42,6 +42,17 @@ unsigned char init_fintek_gpio(void)
 }
 
 /****************************************************************
+ *Function Name: deactivate_gpio
+ *Description:   Deactivate GPIO API
+ *
+ *Return:        NA
+  ***************************************************************/
+void deactivate_gpio (void)
+{
+    DeactiveSIO(sio_data.ic_port);
+}
+
+/****************************************************************
  *Function Name: read_gpio
  *Description:   Read GPIO input current value.
  *               Will pass the GPIOID, e.g. GPIO17, GPIOID = 0x17
