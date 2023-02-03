@@ -36,6 +36,11 @@ char sipIdStored[5];   // xxxx\0
 char sipPwdStored[5];  // xxxx\0
 char sipAstIpAddr[16]; // xxx.xxx.xxx.xxx\0
 
+unsigned char pttSetting = 0x00;
+unsigned char micSetting = 0x00;
+unsigned char audSetting = 0x00;
+unsigned char amuSetting = 0x00;
+
 /****************************************************************
  *Function Name: sigkill_handler
  *Description:   Handle a signal receive during program
@@ -1679,13 +1684,226 @@ void subMenuSIPId (int menu)
 }
 
 /****************************************************************
+ *Function Name: checkEnblDsblSet
+ *Description:   Check and display current enable or disable
+ *               setting for PTT, microphone, uudio and
+ *               audio multicast
+ *
+ *Return:        NA
+ ***************************************************************/
+void checkEnblDsblSet (unsigned char type)
+{
+    char tempBuff[16];
+
+    // Initialize buffer
+    memset(&tempBuff, 0, sizeof(tempBuff));
+
+    // PTT setting
+    if (type == 0x01)
+    {
+        // PTT enabled
+        if (pttSetting)
+        {
+            setCursor (0, 0);
+            printlcd ("PTT Setting:    ", 16);
+            setCursor(0, 1);
+            printlcd ("ENABLED         ", 16);
+        }
+        // PTT disabled
+        else
+        {
+            setCursor (0, 0);
+            printlcd ("PTT Setting:    ", 16);
+            setCursor(0, 1);
+            printlcd ("DISABLED        ", 16);
+        }
+    }
+    // MIC setting
+    else if (type == 0x02)
+    {
+        // MIC enabled
+        if (micSetting)
+        {
+            setCursor (0, 0);
+            printlcd ("MIC Setting:    ", 16);
+            setCursor(0, 1);
+            printlcd ("ENABLED         ", 16);
+        }
+        // MIC disabled
+        else
+        {
+            setCursor (0, 0);
+            printlcd ("MIC Setting:    ", 16);
+            setCursor(0, 1);
+            printlcd ("DISABLED        ", 16);
+        }
+    }
+    // AUDIO setting
+    else if (type == 0x03)
+    {
+        // AUDIO enabled
+        if (audSetting)
+        {
+            setCursor (0, 0);
+            printlcd ("AUD Setting:    ", 16);
+            setCursor(0, 1);
+            printlcd ("ENABLED         ", 16);
+        }
+        // AUDIO disabled
+        else
+        {
+            setCursor (0, 0);
+            printlcd ("AUD Setting:    ", 16);
+            setCursor(0, 1);
+            printlcd ("DISABLED        ", 16);
+        }
+    }
+    // AUDIO multicast setting
+    else if (type == 0x04)
+    {
+        // AUDIO multicast enabled
+        if (amuSetting)
+        {
+            setCursor (0, 0);
+            printlcd ("AMU Setting:    ", 16);
+            setCursor(0, 1);
+            printlcd ("ENABLED         ", 16);
+        }
+        // AUDIO multicast disabled
+        else
+        {
+            setCursor (0, 0);
+            printlcd ("AMU Setting:    ", 16);
+            setCursor(0, 1);
+            printlcd ("DISABLED        ", 16);
+        }
+    }
+}
+
+/****************************************************************
+ *Function Name: subMenuSIPIdStoredStat
+ *Description:   Display status of the current SIP ID stored
+ *               operation
+ *
+ *Return:        NA
+ ***************************************************************/
+void subMenuEnblDsblStoredStat (unsigned char type, unsigned char option)
+{
+    // PTT setting
+    if (type == 0x01)
+    {
+        // Enabled
+        if (option)
+        {
+            setCursor (0, 0);
+            printlcd ("Enable PTT      ", 16);
+            setCursor(0, 1);
+            printlcd ("Successfull     ", 16);
+
+            // Stored current PTT setting
+            pttSetting = 0x01;
+        }
+        // Disabled
+        else
+        {
+            setCursor (0, 0);
+            printlcd ("Disable PTT      ", 16);
+            setCursor(0, 1);
+            printlcd ("Successfull     ", 16);
+
+            // Stored current PTT setting
+            pttSetting = 0x00;
+        }
+
+    }
+    // MIC setting
+    else if (type == 0x02)
+    {
+        // Enabled
+        if (option)
+        {
+            setCursor (0, 0);
+            printlcd ("Enable MIC      ", 16);
+            setCursor(0, 1);
+            printlcd ("Successfull     ", 16);
+
+            // Stored the current MIC setting
+            micSetting = 0x01;
+        }
+        // Disabled
+        else
+        {
+            setCursor (0, 0);
+            printlcd ("Disable MIC     ", 16);
+            setCursor(0, 1);
+            printlcd ("Successfull     ", 16);
+
+            // Stored the current MIC setting
+            micSetting = 0x00;
+        }
+    }
+    // AUDIO setting
+    else if (type == 0x03)
+    {
+        // Enabled
+        if (option)
+        {
+            setCursor (0, 0);
+            printlcd ("Enable AUD      ", 16);
+            setCursor(0, 1);
+            printlcd ("Successfull     ", 16);
+
+            // Stored the current AUD setting
+            audSetting = 0x01;
+        }
+        // Disable
+        else
+        {
+            setCursor (0, 0);
+            printlcd ("Disable AUD     ", 16);
+            setCursor(0, 1);
+            printlcd ("Successfull     ", 16);
+
+            // Stored the current AUD setting
+            audSetting = 0x00;
+        }
+    }
+    // AUDIO multicast setting
+    else if (type == 0x04)
+    {
+        // Enabled
+        if (option)
+        {
+            setCursor (0, 0);
+            printlcd ("Enable AMU      ", 16);
+            setCursor(0, 1);
+            printlcd ("Successfull     ", 16);
+
+            // Stored the current AMU setting
+            amuSetting = 0x01;
+        }
+        // Disabled
+        else
+        {
+            setCursor (0, 0);
+            printlcd ("Disable AMU     ", 16);
+            setCursor(0, 1);
+            printlcd ("Successfull     ", 16);
+
+            // Stored the current AMU setting
+            amuSetting = 0x00;
+        }
+    }
+}
+
+/****************************************************************
  *Function Name: subMenuEnblDsbl
  *Description:   Enable and disable  setting sub menu LCD
  *               display selection
  *
  *Return:        NA
  ***************************************************************/
-void subMenuEnblDsbl (int menu)
+void subMenuEnblDsbl (int menu, unsigned char type)
 {
     char dummyBuff[16];
 
@@ -1704,19 +1922,81 @@ void subMenuEnblDsbl (int menu)
             setCursor(0, 1);
             printlcd ("2-Disable       ", 16);
         break;
-        // Disable + Exit Sub Menu - Selection: 2-Disable
+        // Disable + Current setting - Selection: 2-Disable
         case 1:
-            //clear(); // Clear first LCD previous contents
-            setCursor (0, 0);
-            printlcd ("2-Disable       ", 16);
-            setCursor(0, 1);
-            printlcd ("3-Exit Sub Menu ", 16);
+            // PTT setting
+            if (type == 0x01)
+            {
+                setCursor (0, 0);
+                printlcd ("2-Disable       ", 16);
+                setCursor(0, 1);
+                printlcd ("3-Check PTT Set.", 16);
+            }
+            // MIC setting
+            else if (type == 0x02)
+            {
+                setCursor (0, 0);
+                printlcd ("2-Disable       ", 16);
+                setCursor(0, 1);
+                printlcd ("3-Check MIC Set.", 16);
+            }
+            // AUDIO setting
+            else if (type == 0x03)
+            {
+                setCursor (0, 0);
+                printlcd ("2-Disable       ", 16);
+                setCursor(0, 1);
+                printlcd ("3-Check AUD Set.", 16);
+            }
+            // AUDIO multicast setting
+            else if (type == 0x04)
+            {
+                setCursor (0, 0);
+                printlcd ("2-Disable       ", 16);
+                setCursor(0, 1);
+                printlcd ("3-Check AMU Set.", 16);
+            }
         break;
-        // Exit Main Menu - Selection: 6-Exit Main Menu
+        // Current setting + Exit Sub Menu - Selection: 3-(Current setting)
         case 2:
+            // PTT setting
+            if (type == 0x01)
+            {
+                setCursor (0, 0);
+                printlcd ("3-Check PTT Set.", 16);
+                setCursor(0, 1);
+                printlcd ("4-Exit Editing  ", 16);
+            }
+            // MIC setting
+            else if (type == 0x02)
+            {
+                setCursor (0, 0);
+                printlcd ("3-Check MIC Set.", 16);
+                setCursor(0, 1);
+                printlcd ("4-Exit Editing  ", 16);
+            }
+            // AUDIO setting
+            else if (type == 0x03)
+            {
+                setCursor (0, 0);
+                printlcd ("3-Check AUD Set.", 16);
+                setCursor(0, 1);
+                printlcd ("4-Exit Editing  ", 16);
+            }
+            // AUDIO multicast setting
+            else if (type == 0x04)
+            {
+                setCursor (0, 0);
+                printlcd ("3-Check AMU Set.", 16);
+                setCursor(0, 1);
+                printlcd ("4-Exit Editing  ", 16);
+            }
+        break;
+        // Exit Main Menu - Selection: 5-Exit Main Menu
+        case 3:
             //clear(); // Clear first LCD previous contents
             setCursor (0, 0);
-            printlcd ("3-Exit Sub Menu ", 16);
+            printlcd ("4-Exit Editing  ", 16);
             setCursor(0, 1);
             printlcd (dummyBuff, 16);
         break;
@@ -2321,6 +2601,20 @@ void *thread_lcd_menu (void *arguments)
     int saveIpAddr = 0;
     int chkIpAddr = 0;
     int delIpAddr = 0;
+    int sipPttSetEdit = 0;
+    int sipPttSetIdx = 0;
+    int saveEnblDsbl = 0;
+    int chkPttSet = 0;
+    int sipMicSetEdit = 0;
+    int sipMicSetIdx = 0;
+    int chkMicSet = 0;
+    int sipAudSetEdit = 0;
+    int sipAudSetIdx = 0;
+    int chkAudSet = 0;
+    int sipAudMSetEdit = 0;
+    int sipAudMSetIdx = 0;
+    int chkAudMSet = 0;
+
 	// Thread main loop
     while(1)
     {
@@ -3160,13 +3454,17 @@ void *thread_lcd_menu (void *arguments)
                                         // Check UP and DOWN press for checking current stored Asterisk IP address
                                         if (chkIpAddr == 0)
                                         {
-                                            // Delay 0.1s
-                                            msleep(100);
-                                            // Check Asterisk IP address - Confirm selection
-                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
                                             {
-                                                storedSIPIpAddr(11);
-                                                chkIpAddr = 1;
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Check Asterisk IP address - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    storedSIPIpAddr(11);
+                                                    chkIpAddr = 1;
+                                                }
                                             }
                                         }
                                         // Check UP and DOWN release state
@@ -3187,18 +3485,14 @@ void *thread_lcd_menu (void *arguments)
                                             {
                                                 // Delay 0.1s
                                                 msleep(100);
-                                                // Delete Asterisk IP address - Confirm selection
+                                                // Exit check stored Asterisk IP address - Confirm selection
                                                 if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
                                                 {
-                                                    // Exit check stored Asterisk IP address - Confirm selection
-                                                    if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
-                                                    {
-                                                        sipIpAddrIdx = 0;
-                                                        subMenuSIPAstIp(sipIpAddrIdx);
+                                                    sipIpAddrIdx = 0;
+                                                    subMenuSIPAstIp(sipIpAddrIdx);
 
-                                                        initRicMenu = 0;
-                                                        chkIpAddr = 0;
-                                                    }
+                                                    initRicMenu = 0;
+                                                    chkIpAddr = 0;
                                                 }
                                             }
                                         }
@@ -3250,7 +3544,643 @@ void *thread_lcd_menu (void *arguments)
                                     }
                                 }
                             }
+                            // Entering PTT setting
+                            // 1s delay to eliminate selection loop
+                            else if ((ricSubMenuSIPIdx == 3) && (initRicMenu == 1))
+                            {
+                                // Check UP and DOWN press for controller PTT setting entering selection
+                                if (sipPttSetEdit == 0)
+                                {
+                                    // First GPIO scan
+                                    if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                    {
+                                        // Delay 0.1s
+                                        msleep(100);
+                                        // Entering PTT setting entering selection
+                                        if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                        {
+                                            sipPttSetIdx = 0;
+                                            subMenuEnblDsbl(sipPttSetIdx, 0x01);
+                                            sipPttSetEdit = 1;
+                                            initRicMenu = 0;
+                                        }
+                                    }
+                                }
+                                // Check UP and DOWN release state
+                                else if (sipPttSetEdit == 1)
+                                {
+                                    // UP and DOWN confirm in release state, set flag to prepared exit PTT setting selection
+                                    // Or to check next sub menu option
+                                    if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                    {
+                                        sipPttSetEdit = 2;
+                                    }
+                                }
+                                // Start check UP and DOWN press action
+                                // Scrolling PTT setting selection
+                                else if (sipPttSetEdit == 2)
+                                {
+                                    // Exit Editing - Selection
+                                    if (sipPttSetIdx == 3)
+                                    {
+                                        // First GPIO scan
+                                        if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                        {
+                                            // Delay 0.1s
+                                            msleep(100);
+                                            // Exit PTT setting selection - Confirm selection
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                sipPttSetIdx = 0;
+                                                ricSubMenuSIPIdx = 0;
+                                                subMenuSIPCnfg(ricSubMenuSIPIdx);
 
+                                                initRicMenu = 0;
+                                                sipPttSetEdit = 0;
+                                            }
+                                        }
+                                    }
+                                    // Enable or disable PTT setting
+                                    else if ((sipPttSetIdx == 0) || (sipPttSetIdx == 1))
+                                    {
+                                        // Check UP and DOWN press for saving PTT setting process
+                                        if (saveEnblDsbl == 0)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Saves enable or disable setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    // Enable
+                                                    if (sipPttSetIdx == 0)
+                                                    {
+                                                        // Save enable or disable setting
+                                                        subMenuEnblDsblStoredStat(0x01, 0x01);
+                                                        saveEnblDsbl = 1;
+                                                    }
+                                                    // Disable
+                                                    else
+                                                    {
+                                                        // Save enable or disable setting
+                                                        subMenuEnblDsblStoredStat(0x01, 0x00);
+                                                        saveEnblDsbl = 1;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        // Check UP and DOWN release state
+                                        else if (saveEnblDsbl == 1)
+                                        {
+                                            // UP and DOWN confirm in release state
+                                            if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                            {
+                                                saveEnblDsbl = 2;
+                                            }
+                                        }
+                                        else if (saveEnblDsbl == 2)
+                                        {
+                                            // 3S delay
+                                            sleep(3);
+                                            sipPttSetIdx = 0;
+                                            subMenuEnblDsbl(sipPttSetIdx, 0x01);
+
+                                            initRicMenu = 0;
+                                            saveEnblDsbl = 0;
+                                        }
+                                    }
+                                    // Check current PTT setting
+                                    else if (sipPttSetIdx == 2)
+                                    {
+                                        // Check UP and DOWN press for checking current stored PTT setting
+                                        if (chkPttSet == 0)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Check current PTT setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    // Check current PTT setting
+                                                    checkEnblDsblSet(0x01);
+                                                    chkPttSet = 1;
+                                                }
+                                            }
+                                        }
+                                        // Check UP and DOWN release state
+                                        else if (chkPttSet == 1)
+                                        {
+                                            // UP and DOWN confirm in release state
+                                            if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                            {
+                                                chkPttSet = 2;
+                                            }
+                                        }
+                                        // Start check UP and DOWN press action
+                                        // Exit check current PTT setting
+                                        else if (chkPttSet == 2)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Exit check current PTT setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    sipPttSetIdx = 0;
+                                                    subMenuEnblDsbl(sipPttSetIdx, 0x01);
+
+                                                    initRicMenu = 0;
+                                                    chkPttSet = 0;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // Entering MIC setting
+                            // 1s delay to eliminate selection loop
+                            else if ((ricSubMenuSIPIdx == 4) && (initRicMenu == 1))
+                            {
+                                // Check UP and DOWN press for controller MIC setting entering selection
+                                if (sipMicSetEdit == 0)
+                                {
+                                    // First GPIO scan
+                                    if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                    {
+                                        // Delay 0.1s
+                                        msleep(100);
+                                        // Entering MIC setting entering selection
+                                        if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                        {
+                                            sipMicSetIdx = 0;
+                                            subMenuEnblDsbl(sipMicSetIdx, 0x02);
+                                            sipMicSetEdit = 1;
+                                            initRicMenu = 0;
+                                        }
+                                    }
+                                }
+                                // Check UP and DOWN release state
+                                else if (sipMicSetEdit == 1)
+                                {
+                                    // UP and DOWN confirm in release state, set flag to prepared exit MIC setting selection
+                                    // Or to check next sub menu option
+                                    if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                    {
+                                        sipMicSetEdit = 2;
+                                    }
+                                }
+                                // Start check UP and DOWN press action
+                                // Scrolling MIC setting selection
+                                else if (sipMicSetEdit == 2)
+                                {
+                                    // Exit Editing - Selection
+                                    if (sipMicSetIdx == 3)
+                                    {
+                                        // First GPIO scan
+                                        if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                        {
+                                            // Delay 0.1s
+                                            msleep(100);
+                                            // Exit PTT setting selection - Confirm selection
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                sipMicSetIdx = 0;
+                                                ricSubMenuSIPIdx = 0;
+                                                subMenuSIPCnfg(ricSubMenuSIPIdx);
+
+                                                initRicMenu = 0;
+                                                sipMicSetEdit = 0;
+                                            }
+
+                                        }
+                                    }
+                                    // Enable or disable MIC setting
+                                    else if ((sipMicSetIdx == 0) || (sipMicSetIdx == 1))
+                                    {
+                                        // Check UP and DOWN press for saving PTT setting process
+                                        if (saveEnblDsbl == 0)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Saves enable or disable setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    // Enable
+                                                    if (sipMicSetIdx == 0)
+                                                    {
+                                                        // Save enable or disable setting
+                                                        subMenuEnblDsblStoredStat(0x02, 0x01);
+                                                        saveEnblDsbl = 1;
+                                                    }
+                                                    // Disable
+                                                    else
+                                                    {
+                                                        // Save enable or disable setting
+                                                        subMenuEnblDsblStoredStat(0x02, 0x00);
+                                                        saveEnblDsbl = 1;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        // Check UP and DOWN release state
+                                        else if (saveEnblDsbl == 1)
+                                        {
+                                            // UP and DOWN confirm in release state
+                                            if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                            {
+                                                saveEnblDsbl = 2;
+                                            }
+                                        }
+                                        else if (saveEnblDsbl == 2)
+                                        {
+                                            // 3S delay
+                                            sleep(3);
+                                            sipMicSetIdx = 0;
+                                            subMenuEnblDsbl(sipMicSetIdx, 0x02);
+
+                                            initRicMenu = 0;
+                                            saveEnblDsbl = 0;
+                                        }
+                                    }
+                                    // Check current MIC setting
+                                    else if (sipMicSetIdx == 2)
+                                    {
+                                        // Check UP and DOWN press for checking current stored MIC setting
+                                        if (chkMicSet == 0)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Check current PTT setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    // Check current MIC setting
+                                                    checkEnblDsblSet(0x02);
+                                                    chkMicSet = 1;
+                                                }
+                                            }
+                                        }
+                                        // Check UP and DOWN release state
+                                        else if (chkMicSet == 1)
+                                        {
+                                            // UP and DOWN confirm in release state
+                                            if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                            {
+                                                chkMicSet = 2;
+                                            }
+                                        }
+                                        // Start check UP and DOWN press action
+                                        // Exit check current MIC setting
+                                        else if (chkMicSet == 2)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Exit check current MIC setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    sipMicSetIdx = 0;
+                                                    subMenuEnblDsbl(sipMicSetIdx, 0x02);
+
+                                                    initRicMenu = 0;
+                                                    chkMicSet = 0;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // Entering AUDIO setting
+                            // 1s delay to eliminate selection loop
+                            else if ((ricSubMenuSIPIdx == 5) && (initRicMenu == 1))
+                            {
+                                // Check UP and DOWN press for controller AUDIO setting entering selection
+                                if (sipAudSetEdit == 0)
+                                {
+                                    // First GPIO scan
+                                    if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                    {
+                                        // Delay 0.1s
+                                        msleep(100);
+                                        // Entering MIC setting entering selection
+                                        if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                        {
+                                            sipAudSetIdx = 0;
+                                            subMenuEnblDsbl(sipAudSetIdx, 0x03);
+                                            sipAudSetEdit = 1;
+                                            initRicMenu = 0;
+                                        }
+                                    }
+                                }
+                                // Check UP and DOWN release state
+                                else if (sipAudSetEdit == 1)
+                                {
+                                    // UP and DOWN confirm in release state, set flag to prepared exit AUDIO setting selection
+                                    // Or to check next sub menu option
+                                    if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                    {
+                                        sipAudSetEdit = 2;
+                                    }
+                                }
+                                // Start check UP and DOWN press action
+                                // Scrolling AUDIO setting selection
+                                else if (sipAudSetEdit == 2)
+                                {
+                                    // Exit Editing - Selection
+                                    if (sipAudSetIdx == 3)
+                                    {
+                                        // First GPIO scan
+                                        if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                        {
+                                            // Delay 0.1s
+                                            msleep(100);
+                                            // Exit AUDIO setting selection - Confirm selection
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                sipAudSetIdx = 0;
+                                                ricSubMenuSIPIdx = 0;
+                                                subMenuSIPCnfg(ricSubMenuSIPIdx);
+
+                                                initRicMenu = 0;
+                                                sipAudSetEdit = 0;
+                                            }
+                                        }
+                                    }
+                                    // Enable or disable AUDIO setting
+                                    else if ((sipAudSetIdx == 0) || (sipAudSetIdx == 1))
+                                    {
+                                        // Check UP and DOWN press for saving AUDIO setting process
+                                        if (saveEnblDsbl == 0)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Saves enable or disable setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    // Enable
+                                                    if (sipAudSetIdx == 0)
+                                                    {
+                                                        // Save enable or disable setting
+                                                        subMenuEnblDsblStoredStat(0x03, 0x01);
+                                                        saveEnblDsbl = 1;
+                                                    }
+                                                    // Disable
+                                                    else
+                                                    {
+                                                        // Save enable or disable setting
+                                                        subMenuEnblDsblStoredStat(0x03, 0x00);
+                                                        saveEnblDsbl = 1;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        // Check UP and DOWN release state
+                                        else if (saveEnblDsbl == 1)
+                                        {
+                                            // UP and DOWN confirm in release state
+                                            if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                            {
+                                                saveEnblDsbl = 2;
+                                            }
+                                        }
+                                        else if (saveEnblDsbl == 2)
+                                        {
+                                            // 3S delay
+                                            sleep(3);
+                                            sipAudSetIdx = 0;
+                                            subMenuEnblDsbl(sipAudSetIdx, 0x03);
+
+                                            initRicMenu = 0;
+                                            saveEnblDsbl = 0;
+                                        }
+                                    }
+                                    // Check current AUDIO setting
+                                    else if (sipAudSetIdx == 2)
+                                    {
+                                        // Check UP and DOWN press for checking current stored AUDIO setting
+                                        if (chkAudSet == 0)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Check current PTT setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    // Check current AUDIO setting
+                                                    checkEnblDsblSet(0x03);
+                                                    chkAudSet = 1;
+                                                }
+                                            }
+                                        }
+                                        // Check UP and DOWN release state
+                                        else if (chkAudSet == 1)
+                                        {
+                                            // UP and DOWN confirm in release state
+                                            if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                            {
+                                                chkAudSet = 2;
+                                            }
+                                        }
+                                        // Start check UP and DOWN press action
+                                        // Exit check current AUDIO setting
+                                        else if (chkAudSet == 2)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Exit check current AUDIO setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    sipAudSetIdx = 0;
+                                                    subMenuEnblDsbl(sipAudSetIdx, 0x03);
+
+                                                    initRicMenu = 0;
+                                                    chkAudSet = 0;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // Entering AUDIO multicast setting
+                            // 1s delay to eliminate selection loop
+                            else if ((ricSubMenuSIPIdx == 6) && (initRicMenu == 1))
+                            {
+                                // Check UP and DOWN press for controller AUDIO multicast setting entering selection
+                                if (sipAudMSetEdit == 0)
+                                {
+                                    // First GPIO scan
+                                    if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                    {
+                                        // Delay 0.1s
+                                        msleep(100);
+                                        // Entering MIC setting entering selection
+                                        if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                        {
+                                            sipAudMSetIdx = 0;
+                                            subMenuEnblDsbl(sipAudMSetIdx, 0x04);
+                                            sipAudMSetEdit = 1;
+                                            initRicMenu = 0;
+                                        }
+                                    }
+                                }
+                                // Check UP and DOWN release state
+                                else if (sipAudMSetEdit == 1)
+                                {
+                                    // UP and DOWN confirm in release state, set flag to prepared exit AUDIO multicast setting selection
+                                    // Or to check next sub menu option
+                                    if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                    {
+                                        sipAudMSetEdit = 2;
+                                    }
+                                }
+                                // Start check UP and DOWN press action
+                                // Scrolling AUDIO multicast setting selection
+                                else if (sipAudMSetEdit == 2)
+                                {
+                                    // Exit Editing - Selection
+                                    if (sipAudMSetIdx == 3)
+                                    {
+                                        // First GPIO scan
+                                        if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                        {
+                                            // Delay 0.1s
+                                            msleep(100);
+                                            // Exit PTT setting selection - Confirm selection
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                sipAudMSetIdx = 0;
+                                                ricSubMenuSIPIdx = 0;
+                                                subMenuSIPCnfg(ricSubMenuSIPIdx);
+
+                                                initRicMenu = 0;
+                                                sipAudMSetEdit = 0;
+                                            }
+                                        }
+                                    }
+                                    // Enable or disable AUDIO setting
+                                    else if ((sipAudMSetIdx == 0) || (sipAudMSetIdx == 1))
+                                    {
+                                        // Check UP and DOWN press for saving AUDIO multicast setting process
+                                        if (saveEnblDsbl == 0)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Saves enable or disable setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    // Enable
+                                                    if (sipAudMSetIdx == 0)
+                                                    {
+                                                        // Save enable or disable setting
+                                                        subMenuEnblDsblStoredStat(0x04, 0x01);
+                                                        saveEnblDsbl = 1;
+                                                    }
+                                                    // Disable
+                                                    else
+                                                    {
+                                                        // Save enable or disable setting
+                                                        subMenuEnblDsblStoredStat(0x04, 0x00);
+                                                        saveEnblDsbl = 1;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        // Check UP and DOWN release state
+                                        else if (saveEnblDsbl == 1)
+                                        {
+                                            // UP and DOWN confirm in release state
+                                            if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                            {
+                                                saveEnblDsbl = 2;
+                                            }
+                                        }
+                                        else if (saveEnblDsbl == 2)
+                                        {
+                                            // 3S delay
+                                            sleep(3);
+                                            sipAudMSetIdx = 0;
+                                            subMenuEnblDsbl(sipAudMSetIdx, 0x04);
+
+                                            initRicMenu = 0;
+                                            saveEnblDsbl = 0;
+                                        }
+                                    }
+                                    // Check current AUDIO multicast setting
+                                    else if (sipAudMSetIdx == 2)
+                                    {
+                                        // Check UP and DOWN press for checking current stored AUDIO multicast setting
+                                        if (chkAudMSet == 0)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Check current PTT setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    // Check current AUDIO setting
+                                                    checkEnblDsblSet(0x04);
+                                                    chkAudMSet = 1;
+                                                }
+                                            }
+                                        }
+                                        // Check UP and DOWN release state
+                                        else if (chkAudMSet == 1)
+                                        {
+                                            // UP and DOWN confirm in release state
+                                            if ((read_gpio(0x50,0,gpioUp) != 0x00) && (read_gpio(0x52,0,gpioDwn) != 0x00))
+                                            {
+                                                chkAudMSet = 2;
+                                            }
+                                        }
+                                        // Start check UP and DOWN press action
+                                        // Exit check current AUDIO multicast setting
+                                        else if (chkAudMSet == 2)
+                                        {
+                                            // First GPIO scan
+                                            if ((read_gpio(0x50,0,gpioUp) == 0x00) || (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                            {
+                                                // Delay 0.1s
+                                                msleep(100);
+                                                // Exit check current MIC setting - Confirm selection
+                                                if ((read_gpio(0x50,0,gpioUp) == 0x00) && (read_gpio(0x52,0,gpioDwn) == 0x00))
+                                                {
+                                                    sipAudMSetIdx = 0;
+                                                    subMenuEnblDsbl(sipAudMSetIdx, 0x04);
+
+                                                    initRicMenu = 0;
+                                                    chkAudMSet = 0;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     // Sub menu VOX configuration
@@ -3262,7 +4192,9 @@ void *thread_lcd_menu (void *arguments)
                     // Below scroll UP and DOWN process are only valid during RIC settings menu
                     if ((initRicMenu == 1) && (saveSipId == 0) && (chkSipId == 0) && (delSipId == 0)
                         && (savePwdId == 0) && (chkSipPwd == 0) && (delSipPwd == 0)
-                        && (saveIpAddr == 0) && (chkIpAddr == 0) && (delIpAddr == 0))
+                        && (saveIpAddr == 0) && (chkIpAddr == 0) && (delIpAddr == 0)
+                        && (saveEnblDsbl == 0) && (chkPttSet == 0) && (chkMicSet == 0)
+                        && (chkAudSet == 0) && (chkAudMSet == 0))
                     {
                          // Menu UP - Scroll UP once
                         if ((read_gpio(0x50,0,gpioUp) == 0x00) && (!upPressedOnce))
@@ -3271,7 +4203,8 @@ void *thread_lcd_menu (void *arguments)
                             {
                                 // RIC settings main menu
                                 if ((ricSubMenuSIP == 0) && (sipIdEdit == 0) && (sipPwdEdit == 0)
-                                    && (sipIpAddrEdit == 0))
+                                    && (sipIpAddrEdit == 0) && (sipPttSetEdit == 0) && (sipMicSetEdit == 0)
+                                    && (sipAudSetEdit == 0) && (sipAudMSetEdit == 0))
                                 {
                                     if (ricMenuIdx != 0)
                                     {
@@ -3281,7 +4214,8 @@ void *thread_lcd_menu (void *arguments)
                                 }
                                 // SIP settings main menu
                                 else if ((ricSubMenuSIP != 0) && (sipIdEdit == 0) && (sipPwdEdit == 0)
-                                    && (sipIpAddrEdit == 0))
+                                    && (sipIpAddrEdit == 0) && (sipPttSetEdit == 0) && (sipMicSetEdit == 0)
+                                    && (sipAudSetEdit == 0) && (sipAudMSetEdit == 0))
                                 {
                                     if (ricSubMenuSIPIdx != 0)
                                     {
@@ -3316,7 +4250,42 @@ void *thread_lcd_menu (void *arguments)
                                         subMenuSIPAstIp(sipIpAddrIdx);
                                     }
                                 }
-
+                                // Enable or disable PTT setting selection
+                                else if (sipPttSetEdit != 0)
+                                {
+                                    if (sipPttSetIdx != 0)
+                                    {
+                                        sipPttSetIdx--;
+                                        subMenuEnblDsbl(sipPttSetIdx, 0x01);
+                                    }
+                                }
+                                // Enable or disable MIC setting selection
+                                else if (sipMicSetEdit != 0)
+                                {
+                                    if (sipMicSetIdx != 0)
+                                    {
+                                        sipMicSetIdx--;
+                                        subMenuEnblDsbl(sipMicSetIdx, 0x02);
+                                    }
+                                }
+                                // Enable or disable AUDIO setting selection
+                                else if (sipAudSetEdit != 0)
+                                {
+                                    if (sipAudSetIdx != 0)
+                                    {
+                                        sipAudSetIdx--;
+                                        subMenuEnblDsbl(sipAudSetIdx, 0x03);
+                                    }
+                                }
+                                // Enable or disable AUDIO multicast setting selection
+                                else if (sipAudMSetEdit != 0)
+                                {
+                                    if (sipAudMSetIdx != 0)
+                                    {
+                                        sipAudMSetIdx--;
+                                        subMenuEnblDsbl(sipAudMSetIdx, 0x04);
+                                    }
+                                }
                                 upPressedOnce = 0x01;
                             }
                         }
@@ -3332,7 +4301,8 @@ void *thread_lcd_menu (void *arguments)
                             {
                                 // RIC settings main menu
                                 if ((ricSubMenuSIP == 0) && (sipIdEdit == 0) && (sipPwdEdit == 0)
-                                    && (sipIpAddrEdit == 0))
+                                    && (sipIpAddrEdit == 0) && (sipPttSetEdit == 0) && (sipMicSetEdit == 0)
+                                    && (sipAudSetEdit == 0) && (sipAudMSetEdit == 0))
                                 {
                                     if (ricMenuIdx != 2)
                                     {
@@ -3342,7 +4312,8 @@ void *thread_lcd_menu (void *arguments)
                                 }
                                 // SIP settings main menu
                                 else if ((ricSubMenuSIP != 0) && (sipIdEdit == 0) && (sipPwdEdit == 0)
-                                    && (sipIpAddrEdit == 0))
+                                    && (sipIpAddrEdit == 0) && (sipPttSetEdit == 0) && (sipMicSetEdit == 0)
+                                    && (sipAudSetEdit == 0) && (sipAudMSetEdit == 0))
                                 {
                                     if (ricSubMenuSIPIdx != 9)
                                     {
@@ -3377,7 +4348,42 @@ void *thread_lcd_menu (void *arguments)
                                         subMenuSIPAstIp(sipIpAddrIdx);
                                     }
                                 }
-
+                                // Enable or disable PTT setting selection
+                                else if (sipPttSetEdit != 0)
+                                {
+                                    if (sipPttSetIdx != 3)
+                                    {
+                                        sipPttSetIdx++;
+                                        subMenuEnblDsbl(sipPttSetIdx, 0x01);
+                                    }
+                                }
+                                // Enable or disable MIC setting selection
+                                else if (sipMicSetEdit != 0)
+                                {
+                                    if (sipMicSetIdx != 3)
+                                    {
+                                        sipMicSetIdx++;
+                                        subMenuEnblDsbl(sipMicSetIdx, 0x02);
+                                    }
+                                }
+                                // Enable or disable AUDIO setting selection
+                                else if (sipAudSetEdit != 0)
+                                {
+                                    if (sipAudSetIdx != 3)
+                                    {
+                                        sipAudSetIdx++;
+                                        subMenuEnblDsbl(sipAudSetIdx, 0x03);
+                                    }
+                                }
+                                // Enable or disable AUDIO multicast setting selection
+                                else if (sipAudMSetEdit != 0)
+                                {
+                                    if (sipAudMSetIdx != 3)
+                                    {
+                                        sipAudMSetIdx++;
+                                        subMenuEnblDsbl(sipAudMSetIdx, 0x04);
+                                    }
+                                }
                                 dwnPressedOnce = 0x01;
                             }
                         }
